@@ -1,0 +1,11 @@
+yfinance
+pandas
+numpy
+pandas-ta
+scikit-learn
+matplotlib
+mplfinance
+plyer
+schedule
+bcrypt
+xlsxwriter

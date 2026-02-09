@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# folders
+.venv/
+env/
+venv/
+general_env/
+
+# Mac OS
+.DS_Store
+
+# IDE Settings
+.idea/
+
+# Files
+ornek.json
+config.json
+data.json
+deneme.py
