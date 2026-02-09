@@ -50,6 +50,47 @@ This project is built using a modern Python ecosystem tailored for Data Science 
 | **Reporting** | `xlsxwriter` |
 | **System & Alerts** | `plyer` (Notifications), `bcrypt` (Security) |
 
+## 💻 Installation & Usage
+
+Follow these steps to run the project locally on your machine.
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Alimk2357/financial-portfolio-assistant.git
+cd financial-portfolio-assistant
+```
+### 2. Create a Virtual Environment
+It is recommended to use a virtual environ.ment to avoid conflicts.
+
+**For macOS/Linux:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+**For Windows:**
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+Install the required Python packages listed in `requirements.txt`
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Run the Application
+
+Start the app
+
+```bash
+python main.py
+```
+
 ## 📂 Project Structure
 
 ```bash
