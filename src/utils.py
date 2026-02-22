@@ -22,23 +22,24 @@ def correct_input_format(input_str):
     return corrected_str
 
 def correct_choice_format(choice):
-    s = ""
-    for ch in choice:
-        if ch.isdigit() or ch in ["[", "]"]:
-            s += ch
-
-    if s == "":
+    choice = choice.replace(" ", "")
+    if choice == "":
         return "-27"
-    elif s in ["[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]", "[8]", "[9]"]:
-        return s[1]
+    elif choice in ["[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]", "[8]", "[9]"]:
+        return choice[1]
     else:
+        s = ""
+        for i in range(0,len(choice)):
+            if choice[i].isdigit() or (choice[i] == '.' and choice[i-1].isdigit() and choice[i+1].isdigit()) or choice[i] == "-":
+                s += choice[i]
         return s
+
 
 def find_empty_key(strategies):
     i = 1
-    while i not in strategies:
+    while f"{i}" in strategies:
         i += 1
-    return i
+    return f"{i}"
 
 def is_valid_date(date):
     try:

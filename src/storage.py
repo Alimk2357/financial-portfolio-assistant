@@ -1,8 +1,7 @@
 import json
 import os
 import stat
-from pathlib import Path
-
+from src.tracking import DATA_LOCK
 
 def create_data():
     with open("data.json", "w", encoding="utf-8") as file:
@@ -23,12 +22,13 @@ def load_data():
 
 
 def save_temp(temp):
-    with open("temp.json", "w", encoding="utf-8") as temp_file:
-        json.dump(temp, temp_file, indent=4)
-        # to guarantee atomic write
-        temp_file.flush()
-        os.fsync(temp_file.fileno())
-        # to guarantee atomic write
+    with DATA_LOCK:
+        with open("temp.json", "w", encoding="utf-8") as temp_file:
+            json.dump(temp, temp_file, indent=4)
+            # to guarantee atomic write
+            temp_file.flush()
+            os.fsync(temp_file.fileno())
+            # to guarantee atomic write
 
     os.chmod("temp.json", stat.S_IREAD)
 
@@ -38,12 +38,3 @@ def save_temp(temp):
         print(f"Error: {OSError}")
         if os.path.exists("temp.json"):
             os.remove("temp.json")
-
-
-
-"""
-def load_config():
-    with open("config.json", "r", encoding="utf-8") as config_file:
-        config = json.load(config_file)
-    return config
-"""

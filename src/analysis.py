@@ -3,12 +3,13 @@ import pandas as pd
 import pandas_ta as ta
 import matplotlib.pyplot as plt
 import mplfinance as mpf
-import xlsxwriter
 import io
 from datetime import datetime
 from pathlib import Path
 import src.utils as utils
 import time
+from src.tracking import DATA_LOCK
+
 
 def rsi(df, workbook):
     df['RSI'] = df.ta.rsi(length=14)
@@ -217,7 +218,6 @@ def create_image(df, code, currency_symbol):
         plots.append(mpf.make_addplot(df['HV_252'], panel=3, color='#1CC838', width=2, label='HV-252 (annual)'))
 
     my_style = mpf.make_mpf_style(base_mpf_style='yahoo', rc={'font.size': 12}, y_on_right = False)
-    # , 'axes.titlesize': 12, 'xtick.labelsize': 8,'ytick.labelsize': 8
     fig, axlist = mpf.plot(
         df,
         type='candle',
@@ -251,7 +251,8 @@ def analysis_report(data, which_asset, username, code):
     # to calculate hv-252 properly, we need data with at least 253 days
     # therefore we use 2y period
     df = ticker.history(period="2y", interval="1d")
-    currency = data["users"][username][which_asset][code]["currency"]
+    with DATA_LOCK:
+        currency = data["users"][username][which_asset][code]["currency"]
     currency_symbol = utils.get_currency(currency)
 
     now = datetime.now()
