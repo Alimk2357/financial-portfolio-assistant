@@ -93,8 +93,6 @@ def volatility(df, workbook):
     hv_252_comment = ""
     hv_252_format = {}
     volatility_cone = df["HV_21"].iloc[-1] - df["HV_252"].iloc[-1]
-    volatility_cone_comment = ""
-    volatility_cone_format = {}
     if df['HV_21'].iloc[-1] < 15:
         hv_21_comment = "Low (Stable)"
         hv_21_format = workbook.add_format({'align': 'right', 'bold': True, 'font_color': 'green'})
@@ -158,10 +156,6 @@ def volume(df, workbook):
     ratio_long = curr_volume / vol_avg_long
     short_comment = ""
     short_comment_format = {}
-    mid_comment = ""
-    mid_comment_format = {}
-    long_comment = ""
-    long_comment_format = {}
     if ratio_short > 2.0:
         short_comment = "Volume Spike (High Interest)"
         short_comment_format = workbook.add_format({'align': 'right', 'bold': True, 'font_color': 'green'})
@@ -273,7 +267,6 @@ def analysis_report(data, which_asset, username, code):
         center_title_format = workbook.add_format({'bold':True, 'italic':True, 'align': 'center'})
         center_format = workbook.add_format({'align': 'center'})
         left_format = workbook.add_format({'align': 'left'})
-        right_format = workbook.add_format({'align': 'right'})
         # Sheet 'Summary'
         worksheet_summary = workbook.add_worksheet("Summary")
         worksheet_summary.write(0, 0, "Analysis Date:", left_title_format)
