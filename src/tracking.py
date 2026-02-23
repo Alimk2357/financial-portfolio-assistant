@@ -85,7 +85,7 @@ def check_cache(data,username):
                     del strategy_cache[asset_type][asset][strategy]
 
 def send_notification(data,username, title, message):
-    if data["users"][username]["notifications"]["desktop_notification"]:
+    if data["users"][username]["notifications"]["desktop_notifications"]:
         notification.notify(
             title=title,
             message=message,
