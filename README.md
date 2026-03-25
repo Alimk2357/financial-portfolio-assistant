@@ -83,6 +83,10 @@ Install the required Python packages listed in `requirements.txt`
 pip install -r requirements.txt
 ```
 
+**Important Note for macOS Users:**
+The ML model (LightGBM) requires the `libomp` library to run. If it is not installed, install it via the terminal:
+`brew install libomp`
+
 ### 4. Run the Application
 
 Start the app
