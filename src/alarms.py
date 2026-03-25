@@ -2,7 +2,7 @@ import yfinance as yf
 import src.utils as utils
 import src.storage as storage
 import time
-from src.tracking import DATA_LOCK
+from src.shared import DATA_LOCK
 
 def active_alarms(username, data):
     alarms = {}
@@ -20,7 +20,7 @@ def active_alarms(username, data):
                                 alarms[asset]['count'] += 1
     return alarms
 
-def alarm_status_decider():
+def alarm_status_decider(asset):
     status = input("Do you want to activate the alarm (Y/N) (-1 to go back): ")
     if status == "-1":
         return ""
@@ -33,19 +33,24 @@ def alarm_status_decider():
         status = utils.correct_input_format(status)
     if status in ["y", "yes", "active", "activate"]:
         status = "active"
+        with DATA_LOCK:
+            if not asset["is_active"]:
+                asset["is_active"] = True
     elif status in ["n", "no", "inactive", "deactivate"]:
         status = "inactive"
     return status
 
 
-def status_change(alarm_properties):
+def status_change(asset, alarm_properties):
     with DATA_LOCK:
-        old_status = alarm_properties["status"]
         if alarm_properties["status"] == "active":
             alarm_properties["status"] = "inactive"
+            print("Alarm is deactivated.")
         elif alarm_properties["status"] == "inactive":
             alarm_properties["status"] = "active"
-        print(f"Alarm status is changed from {old_status} to {alarm_properties['status']}.")
+            if not asset["is_active"]:
+                asset["is_active"] = True
+            print("Alarm is activated.")
 
 def add_alarm(data, code, which_asset, username):
     alarm_type = input("Enter the type of alarm (Fixed Price, Period Extremum or Percentage Change) you want to add (-1 to go back): ")
@@ -61,6 +66,7 @@ def add_alarm(data, code, which_asset, username):
 
     with DATA_LOCK:
         key = utils.find_empty_key(data["users"][username][which_asset][code]["strategies"])
+        asset = data["users"][username][which_asset][code]
 
     if alarm_type in ["fixedprice", "fixed", "price"]:
         alarm_type = "fixed_price"
@@ -85,7 +91,7 @@ def add_alarm(data, code, which_asset, username):
             # when latest_price >= value
             # alarm will be triggered
             condition = "greater_than"
-        status = alarm_status_decider()
+        status = alarm_status_decider(asset)
         with DATA_LOCK:
             data["users"][username][which_asset][code]["strategies"][key] = {
                 "type": alarm_type,
@@ -111,7 +117,7 @@ def add_alarm(data, code, which_asset, username):
                 return
             print("Invalid date or format, please try again.")
             start_date = input("Enter the start date (YYYY-MM-DD) of the period (-1 to go back): ")
-        status = alarm_status_decider()
+        status = alarm_status_decider(asset)
         with DATA_LOCK:
             data["users"][username][which_asset][code]["strategies"][key] = {
                 "type": alarm_type,
@@ -144,7 +150,7 @@ def add_alarm(data, code, which_asset, username):
             print("Invalid percentage change amount, please try again.")
             value = input("Enter the percentage change amount that will trigger the alarm (-1 to go back): ")
             value = float(utils.correct_choice_format(value))
-        status = alarm_status_decider()
+        status = alarm_status_decider(asset)
         ticker = yf.Ticker(code)
         base_price = ticker.fast_info["lastPrice"]
         with DATA_LOCK:
@@ -208,6 +214,7 @@ def edit_alarm(data, code, which_asset, username):
         return
     with DATA_LOCK:
         alarm_properties = data["users"][username][which_asset][code]["strategies"][the_key]
+        asset = data["users"][username][which_asset][code]
         alarm_type = alarm_properties["type"]
         length = print_alarm_properties(alarm_properties)
 
@@ -245,7 +252,7 @@ def edit_alarm(data, code, which_asset, username):
             else:
                 print(f"Trigger value is already set to {value}, nothing is changed.")
         elif choice == 2:
-            status_change(alarm_properties)
+            status_change(asset, alarm_properties)
     elif alarm_type == "period_extremum":
         if choice == 1:
             s1 = ""
@@ -275,7 +282,7 @@ def edit_alarm(data, code, which_asset, username):
             else:
                 print(f"Start date is already set to {start_date}, nothing is changed.")
         elif choice == 3:
-            status_change(alarm_properties)
+            status_change(asset, alarm_properties)
     elif alarm_type == "percentage_change":
         if choice == 1:
             with DATA_LOCK:
@@ -318,7 +325,7 @@ def edit_alarm(data, code, which_asset, username):
             else:
                 print(f"Base price for percentage change trigger is already set to {value}, nothing is changed.")
         elif choice == 4:
-            status_change(alarm_properties)
+            status_change(asset, alarm_properties)
     storage.save_temp(data)
     print(f"Alarm {the_key} is edited successfully.")
     time.sleep(3)
@@ -452,5 +459,5 @@ def activate_all_alarms(data,code, which_asset, logged_user):
         for strategy in shortcut:
             shortcut[strategy]["status"] = "active"
     storage.save_temp(data)
-    print("All alarms is activated.")
+    print("All alarms are activated.")
     time.sleep(2)

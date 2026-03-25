@@ -119,13 +119,13 @@ def main():
                     elif choice_settings == 2:
                         utils.clear_screen()
                         ui.notification_settings_menu(data, logged_user)
-                        choice_notification_settings = input("\nEnter your choice (1-3) (-1 to go back): ")
+                        choice_notification_settings = input("\nEnter your choice (1-4) (-1 to go back): ")
                         choice_notification_settings = int(utils.correct_choice_format(choice_notification_settings))
-                        while choice_notification_settings < 1 or choice_notification_settings > 3:
+                        while choice_notification_settings < 1 or choice_notification_settings > 4:
                             if choice_notification_settings == -1:
                                 break
                             print("\nInvalid choice, please try again.")
-                            choice_notification_settings = input("\nEnter your choice (1-3) (-1 to go back): ")
+                            choice_notification_settings = input("\nEnter your choice (1-4) (-1 to go back): ")
                             choice_notification_settings = int(utils.correct_choice_format(choice_notification_settings))
                         if choice_notification_settings == 1:
                             with tracking.DATA_LOCK:
@@ -181,6 +181,21 @@ def main():
                             else:
                                 print("Notification duration is not changed.")
                             time.sleep(2)
+                        elif choice_notification_settings == 4:
+                            with tracking.DATA_LOCK:
+                                if data["users"][logged_user]["notifications"]["financial_recommendations"]:
+                                    data["users"][logged_user]["notifications"]["financial_recommendations"] = False
+                                    print("All the recommendations are turned off.")
+                                else:
+                                    data["users"][logged_user]["notifications"]["financial_recommendations"] = True
+                                    for asset_type in data["users"][logged_user]:
+                                        if asset_type not in ["stocks", "crypto", "forex", "commodities"]:
+                                            continue
+                                        for asset in data["users"][logged_user][asset_type]:
+                                            data["users"][logged_user][asset_type][asset]["financial_recommendation"] = True
+                                    print("All the recommendations are turned on.")
+                            storage.save_temp(data)
+                            time.sleep(1.5)
                     elif choice_settings == 3:
                         with tracking.DATA_LOCK:
                             old_currency = data["users"][logged_user]["default_currency"]
@@ -290,16 +305,16 @@ def main():
                     portfolio.add_financial_asset(data, which_asset, logged_user)
                 elif operation in ["D", "[D]"]:
                     choice_detail = 0
-                    while choice_detail != 8:
+                    while choice_detail != 9:
                         utils.clear_screen()
                         with tracking.DATA_LOCK:
                             financial_asset = financial_assets[code]
                         ui.detail_menu(financial_asset, code)
-                        choice_detail = input("\nEnter your choice (1-8): ")
+                        choice_detail = input("\nEnter your choice (1-9): ")
                         choice_detail = int(utils.correct_choice_format(choice_detail))
-                        while choice_detail > 8 or choice_detail < 1:
+                        while choice_detail > 9 or choice_detail < 1:
                             print("\nInvalid choice, please try again.")
-                            choice_detail = input("Enter your choice (1-8): ")
+                            choice_detail = input("Enter your choice (1-9): ")
                             choice_detail = int(utils.correct_choice_format(choice_detail))
 
                         if choice_detail == 1:
@@ -315,6 +330,17 @@ def main():
                         elif choice_detail == 6:
                             alarms.deactivate_all_alarms(data, code, which_asset, logged_user)
                         elif choice_detail == 7:
+                            with tracking.DATA_LOCK:
+                                if financial_asset["financial_recommendation"]:
+                                    financial_asset["financial_recommendation"] = False
+                                    print("Financial recommendation is deactivated.")
+                                else:
+                                    financial_asset["financial_recommendation"] = True
+                                    if not data["users"][logged_user]["notifications"]["financial_recommendations"]:
+                                        data["users"][logged_user]["notifications"]["financial_recommendations"] = True
+                                    print("Financial recommendation is activated.")
+                            time.sleep(1.5)
+                        elif choice_detail == 8:
                             alarms.edit_quantity(data, code, which_asset, logged_user)
                 elif operation in ["R", "[R]"]:
                    portfolio.remove_financial_asset(data, which_asset, logged_user, code)

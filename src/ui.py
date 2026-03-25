@@ -2,7 +2,7 @@ import src.utils as utils
 from datetime import datetime
 import yfinance as yf
 import src.alarms as alarms_lib
-from src.tracking import DATA_LOCK
+from src.shared import DATA_LOCK
 
 def entrance(data):
     with DATA_LOCK:
@@ -36,6 +36,7 @@ def detail_menu(financial_asset, code):
         currency = financial_asset.get("currency")
         quantity = financial_asset.get("quantity")
         total_cost = financial_asset.get("total_cost")
+        financial_recommendation = financial_asset.get("financial_recommendation")
     currency_symbol = utils.get_currency(currency)
     print("="*12 + f"  {code}  " + "="*12 + "\n")
     ticker = yf.Ticker(code)
@@ -47,7 +48,11 @@ def detail_menu(financial_asset, code):
     print(f"[Name]: {name}")
     print(f"[Price]: {last_price:.2f} {currency_symbol}")
     print(f"[Quantity]: {quantity}")
-    print(f"[Total Value]: {(quantity * last_price):.2f} {currency_symbol} ({earning_str})\n")
+    print(f"[Total Value]: {(quantity * last_price):.2f} {currency_symbol} ({earning_str})")
+    if financial_recommendation:
+        print("[Financial Recommendation]: Active\n")
+    else:
+        print("[Financial Recommendation]: Inactive\n")
     print("=" * 12 + "=" * (len(code) + 4) + "=" * 12 + "\n")
     print_all_alarms(financial_asset)
     print("[1] Financial Analysis Report (RSI, Trend, Volatility, Volume)")
@@ -56,8 +61,12 @@ def detail_menu(financial_asset, code):
     print("[4] Delete an alarm strategy")
     print("[5] Activate all alarms")
     print("[6] Deactivate all alarms")
-    print("[7] Edit the quantity and the total cost")
-    print("[8] Back")
+    if not financial_recommendation:
+        print("[7] Activate financial recommendation")
+    else:
+        print("[7] Deactivate financial recommendation")
+    print("[8] Edit the quantity and the total cost")
+    print("[9] Back")
 
 def period_extremum(strategy):
     with DATA_LOCK:
@@ -142,7 +151,7 @@ def calculate_total(data, username):
         default_currency = data["users"][username]["default_currency"]
         key_list = list(data["users"][username].keys())
     for key in key_list:
-        if key in ["password", "language", "default_currency", "last_checked", "notifications"]:
+        if key not in ["stocks", "forex", "crypto", "commodities"]:
             continue
         temp_list = helper_calculate_total(data, username, key, default_currency)
         total_cost += temp_list[0]
@@ -329,3 +338,8 @@ def notification_settings_menu(data, logged_user):
             print("[1] Turn on the notifications")
     print("[2] Change the name of app")
     print("[3] Change the duration of the notifications")
+    with DATA_LOCK:
+        if data["users"][logged_user]["notifications"]["financial_recommendations"]:
+            print("[4] Turn off the recommendations for all financial assets")
+        else:
+            print("[4] Turn on the recommendations for all financial assets")

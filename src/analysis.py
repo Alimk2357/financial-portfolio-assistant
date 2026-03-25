@@ -8,8 +8,56 @@ from datetime import datetime
 from pathlib import Path
 import src.utils as utils
 import time
-from src.tracking import DATA_LOCK
+from src.shared import DATA_LOCK
 
+
+exchange_days = {
+    # 🇺🇸 US
+    "NMS": 252,
+    "NYQ": 252,
+    "ASE": 252,
+
+    # 🇹🇷 Turkey
+    "IST": 252,
+
+    # 🇬🇧 UK
+    "LSE": 252,
+
+    # 🇩🇪 Germany
+    "XETRA": 252,
+
+    # 🇫🇷 France
+    "EPA": 252,
+
+    # 🇨🇭 Switzerland
+    "SWX": 252,
+
+    # 🇯🇵 Japan
+    "TYO": 245,
+
+    # 🇭🇰 Hong Kong
+    "HKG": 245,
+
+    # 🇨🇳 China
+    "SHH": 240,
+    "SHE": 240,
+
+    # 🌍 Forex
+    "CCY": 252,
+
+    # 🪙 Crypto
+    "CCC": 365,
+
+    # 🟡 Commodities
+    "CMX": 252,
+    "NYM": 252,
+
+    # fallback
+    "UNKNOWN": 252
+}
+
+def get_exchange_days(exchange):
+    return exchange_days.get(exchange, exchange_days['UNKNOWN'])
 
 def rsi(df, workbook):
     df['RSI'] = df.ta.rsi(length=14)
@@ -75,15 +123,17 @@ def sma(df, workbook):
     }
 
 
-def volatility(df, workbook):
+def volatility(df, workbook, ticker):
+    exchange = ticker.fast_info['exchange']
+    annual_exchange_day_count = get_exchange_days(exchange)
     # Historical volatility
     df['Returns'] = df['Close'].pct_change()
     # Short-term (1 month)
-    df['HV_21'] = df['Returns'].rolling(window=21).std() * (252 ** 0.5) * 100
+    df['HV_21'] = df['Returns'].rolling(window=21).std() * (annual_exchange_day_count ** 0.5) * 100
     # Mid-term (3 months)
-    df['HV_63'] = df['Returns'].rolling(window=63).std() * (252 ** 0.5) * 100
+    df['HV_63'] = df['Returns'].rolling(window=63).std() * (annual_exchange_day_count ** 0.5) * 100
     # Long-term (1 year)
-    df['HV_252'] = df['Returns'].rolling(window=252).std() * (252 ** 0.5) * 100
+    df['HV_252'] = df['Returns'].rolling(window=252).std() * (annual_exchange_day_count ** 0.5) * 100
     # Historical volatility
 
     hv_21_comment = ""
@@ -259,7 +309,7 @@ def analysis_report(data, which_asset, username, code):
         workbook = writer.book
         rsi_comment = rsi(df, workbook)
         sma_comment = sma(df, workbook)
-        volatility_comment = volatility(df, workbook)
+        volatility_comment = volatility(df, workbook, ticker)
         volume_comment = volume(df, workbook)
         df_1y = df.iloc[-252:].copy()
         left_title_format = workbook.add_format({'bold':True, 'italic':True, 'align':'left'})

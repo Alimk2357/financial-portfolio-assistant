@@ -1,8 +1,10 @@
+import threading
 import yfinance as yf
 import src.utils as utils
 import src.storage as storage
 import logging
-from src.tracking import DATA_LOCK
+from src.shared import DATA_LOCK
+import src.model as model
 
 logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 
@@ -47,23 +49,31 @@ def add_financial_asset(data, which_asset, username):
             total_cost = input(f"Enter the total cost of {quantity} {code} to you in {currency_symbol} ({currency}) (-1 to go back): ")
             total_cost = float(utils.correct_choice_format(total_cost))
     with DATA_LOCK:
+        recommendation = data["users"][username]["notifications"]["financial_recommendations"]
         data["users"][username][which_asset][code.upper()] = {
             "name": info["shortName"],
             "currency": currency,
             "quantity": quantity,
             "total_cost": total_cost,
             "is_active": False,
+            "financial_recommendation": recommendation,
             "strategies": {}
         }
     storage.save_temp(data)
     print(f"{quantity} {code} is added successfully to portfolio of {username}.")
-
+    model_trainer = threading.Thread(
+        target = model.train_model,
+        args = (code,),
+        name = "Model Trainer",
+        daemon = False
+    )
+    model_trainer.start()
 
 def remove_financial_asset(data, which_asset, username, code):
     with DATA_LOCK:
         del data["users"][username][which_asset][code]
     storage.save_temp(data)
     print(f"{code} is removed successfully from portfolio of {username}.")
-
+    model.delete_model(username,code)
 
 

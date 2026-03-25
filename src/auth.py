@@ -1,7 +1,7 @@
 import bcrypt
 import src.storage as storage
 import time
-from src.tracking import DATA_LOCK
+from src.shared import DATA_LOCK
 
 def check_password(password, hashed_password):
     # both parameters are string, they must be converted into bytes
@@ -25,7 +25,7 @@ def password_input(data,username, message):
         if counter % 4 == 0:
             print("Too many failed attempts, wait 30 seconds")
             time.sleep(30)
-        password = input(f"Enter {message} password (-1 to go back): ")
+        password = input(f"Enter{message}password (-1 to go back): ")
         counter += 1
     return True
 
@@ -142,7 +142,8 @@ def create_user(data):
             "notifications": {
                 "desktop_notifications": True,
                 "app_name": "Financial Portfolio Assistant",
-                "timeout": 10
+                "timeout": 10,
+                "financial_recommendations": True
             },
             "password": hashed_password_decoded,
             "language": "en",
