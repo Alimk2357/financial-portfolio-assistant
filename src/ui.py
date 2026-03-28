@@ -3,6 +3,7 @@ from datetime import datetime
 import yfinance as yf
 import src.alarms as alarms_lib
 from src.shared import DATA_LOCK
+import time
 
 def entrance(data):
     with DATA_LOCK:
@@ -24,10 +25,10 @@ def print_title():
 def table_headers():
     a = "Code"
     b = "Latest Price"
-    c = "Change(%)"
+    c = "Daily Change(%)"
     d = "Status"
     e = "Alarm"
-    print(f"   {a:<20}{b:<20}{c:<12}{d:<12}{e:<20}")
+    print(f"   {a:<20}{b:<20}{c:<20}{d:<12}{e:<20}")
     print("-" * 90)
 
 def detail_menu(financial_asset, code):
@@ -40,7 +41,12 @@ def detail_menu(financial_asset, code):
     currency_symbol = utils.get_currency(currency)
     print("="*12 + f"  {code}  " + "="*12 + "\n")
     ticker = yf.Ticker(code)
-    last_price = ticker.fast_info['lastPrice']
+    try:
+        last_price = ticker.fast_info['lastPrice']
+    except Exception:
+        print(f"[ERROR]: Data could not fetched for {code} (API Error). Detailed Menu of {code} could not be displayed. Please try again.")
+        return
+
     earning = (last_price * quantity - total_cost) / total_cost * 100
     earning_str = ""
     if earning > 0: earning_str += "+"
@@ -132,13 +138,18 @@ def helper_calculate_total(data, username, asset_type, default_currency):
             quantity = data["users"][username][asset_type][asset]["quantity"]
             total_cost_currency = data["users"][username][asset_type][asset]["total_cost"]
         ticker = yf.Ticker(asset)
-        last_price_asset = ticker.fast_info["lastPrice"]
-        if currency != default_currency:
-            currency_ticker_code = currency + default_currency + "=X"
-            currency_ticker = yf.Ticker(currency_ticker_code)
-            last_price = currency_ticker.fast_info["lastPrice"]
-            total_cost += total_cost_currency * last_price
-            total_value += last_price_asset * last_price * quantity
+        try:
+            last_price_asset = ticker.fast_info["lastPrice"]
+            if currency != default_currency:
+                currency_ticker_code = currency + default_currency + "=X"
+                currency_ticker = yf.Ticker(currency_ticker_code)
+                last_price = currency_ticker.fast_info["lastPrice"]
+                total_cost += total_cost_currency * last_price
+                total_value += last_price_asset * last_price * quantity
+        except Exception:
+            print(f"[ERROR]: Data could not fetched for {asset} (API Error). Total portfolio value could not be calculated. Please try again.")
+            return
+
         else:
             total_cost += total_cost_currency
             total_value += last_price_asset * quantity
@@ -233,6 +244,7 @@ def main_menu(username, data):
 
     print("   MAIN MENU")
     print("=" * 15 + "\n")
+    print("[0] Refresh main menu")
     print("[1] Stock Management")
     print("[2] Crypto Management")
     print("[3] Forex Management")
@@ -259,9 +271,16 @@ def transaction_management_menu(data, username, which_asset):
             asset_list = list(data["users"][username][which_asset].keys())
         for key in asset_list:
             ticker = yf.Ticker(key)
-            df = ticker.history(period="2d", interval="1m")
-            current_price = df["Close"].iloc[-1]
-            yesterday_close = ticker.history(period="2d", interval="1d")["Close"].iloc[0]
+            try:
+                df = ticker.history(period="2d", interval="1m")
+                time.sleep(0.1)
+                current_price = ticker.fast_info["lastPrice"]
+                time.sleep(0.1)
+                yesterday_close = ticker.history(period="2d", interval="1d")["Close"].iloc[0]
+            except Exception:
+                print(f"[ERROR]: Data could not fetched for {key} (API Error). Transaction Management Menu could not be displayed. Please try again.")
+                return None
+
             change = (current_price - yesterday_close) / yesterday_close * 100
             with DATA_LOCK:
                 currency = data["users"][username][which_asset][key]["currency"]
@@ -301,7 +320,7 @@ def transaction_management_menu(data, username, which_asset):
             if change > 0: change_str += "+"
             change_str += f"{change:.2f}%"
             if count > 1: alarm += f" (+{count - 1})"
-            row = f"{i}. {key:<20}{current_price_str:<20}{change_str:<12}{status:<12}{alarm:<20}"
+            row = f"{i}. {key:<20}{current_price_str:<20}{change_str:<20}{status:<12}{alarm:<20}"
             i += 1
             print(row)
         print(f"\n{'OPERATIONS':^20}")
@@ -337,9 +356,8 @@ def notification_settings_menu(data, logged_user):
         else:
             print("[1] Turn on the notifications")
     print("[2] Change the name of app")
-    print("[3] Change the duration of the notifications")
     with DATA_LOCK:
         if data["users"][logged_user]["notifications"]["financial_recommendations"]:
-            print("[4] Turn off the recommendations for all financial assets")
+            print("[3] Turn off the recommendations for all financial assets")
         else:
-            print("[4] Turn on the recommendations for all financial assets")
+            print("[3] Turn on the recommendations for all financial assets")

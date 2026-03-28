@@ -17,7 +17,8 @@ The system moves beyond simple price targets by offering three distinct monitori
 * **Fixed Price Alarm:** Triggers when an asset crosses a specific price threshold (e.g., *Bitcoin > $100,000*).
 * **Percentage Change Alarm:** Detects sudden volatility by monitoring percentage moves within a specific timeframe (e.g., *Price drops 5% in 1 hour*).
 * **Period Extremum Alarm:** Monitors for breakout signals by triggering when the price exceeds the highest or lowest value of a user-defined period (e.g., *New 30-day High*).
-* **Desktop Notifications:** Powered by `plyer`, alerts are delivered directly to the user's desktop environment.
+* **Desktop Notifications:** Powered by `notify-py`, alerts are delivered directly to the user's desktop environment.
+Alarm strategies are tracked at the background using `threading`, while user is continuing his/her operations.
 
 ### 2. 📑 Automated Financial Reporting
 Generates detailed `.xlsx` reports using `xlsxwriter` for in-depth post-market analysis.
@@ -25,7 +26,8 @@ Generates detailed `.xlsx` reports using `xlsxwriter` for in-depth post-market a
 * **Raw Data Sheet:** Archives historical OHLCV data alongside calculated technical indicators, formatted for easy integration with other analytical tools.
 
 ### 3. 🤖 ML-Powered Price Prediction
-* **Trend Forecasting:** Utilizes `scikit-learn` to train regression models on historical data.
+* **Trend Forecasting:** Utilizes `scikit-learn` and `multiprocessing` to train gradient boosting-based model on historical data.
+* **Advanced Modeling:** Incorporates `LightGBM`, a gradient boosting framework, to enhance prediction accuracy and handle complex financial patterns.
 * **Predictive Analysis:** Forecases short-term price movements to support "Buy/Hold/Sell" decision-making processes.
 
 ### 4. 📊 Advanced Technical Analysis
@@ -40,15 +42,15 @@ Generates detailed `.xlsx` reports using `xlsxwriter` for in-depth post-market a
 
 This project is built using a modern Python ecosystem tailored for Data Science and Finance:
 
-| Category | Libraries |
-|----------|-----------|
-| **Core & Data** | `Python 3.x`, `pandas`, `numpy` |
-| **Financial Data** | `yfinance` (Yahoo Finance API) |
-| **Technical Analysis** | `pandas-ta` |
-| **Machine Learning** | `scikit-learn` |
-| **Visualization** | `matplotlib`, `mplfinance` |
-| **Reporting** | `xlsxwriter` |
-| **System & Alerts** | `plyer` (Notifications), `bcrypt` (Security) |
+| Category | Libraries                                        |
+|----------|--------------------------------------------------|
+| **Core & Data** | `Python 3.x`, `pandas`, `numpy`                  |
+| **Financial Data** | `yfinance` (Yahoo Finance API)                   |
+| **Technical Analysis** | `pandas-ta`                                      |
+| **Machine Learning** | `scikit-learn`, `lightgbm`                       |
+| **Visualization** | `matplotlib`, `mplfinance`                       |
+| **Reporting** | `xlsxwriter`                                     |
+| **System & Alerts** | `notify-py` (Notifications), `bcrypt` (Security) |
 
 ## 💻 Installation & Usage
 
@@ -100,11 +102,17 @@ python main.py
 ```bash
 financial-portfolio-assistant/
 ├── src/
-│   ├── analysis/          # ML models (scikit-learn) and Technical Analysis (pandas-ta)
-│   ├── reporting/         # Excel report generation logic (xlsxwriter)
-│   ├── alarms/            # Logic for Fixed, Percentage, and Extremum alarms
-│   ├── utils/             # Helper functions & Security (bcrypt)
-│   └── visualization/     # Chart plotting (mplfinance)
-├── main.py                # Entry point
+│   ├── __init__.py        # Exists to define src as a Python package
+│   ├── analysis.py        # Technical Analysis (pandas-ta) and Excel report
+│   ├── portfolio.py       # Portfolio operations (adding and deleting financial assets) 
+│   ├── alarms.py          # Implementation of Fixed, Percentage, and Extremum alarms
+│   ├── utils.py           # Helper functions
+│   ├── tracking.py        # Alarm tracking system and notifications
+│   ├── storage.py         # Loading and saving operations to the data.json
+│   ├── auth.py            # User account operations and encryption (bcrypt)
+│   ├── shared.py          # Stores global variables, exists to prevent circular import
+│   ├── model.py           # ML model and fetch-train-add pipeline
+│   └── ui.py              # Terminal-based UI functions
+├── main.py                # Menu operations
 ├── requirements.txt       # Dependencies
 └── README.md              # Documentation

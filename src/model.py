@@ -6,8 +6,11 @@ import numpy as np
 import pandas_ta as ta
 from src.analysis import get_exchange_days
 from sklearn.preprocessing import StandardScaler
-import time
 from sklearn.model_selection import train_test_split, TimeSeriesSplit, RandomizedSearchCV
+import time
+import threading
+from concurrent.futures import ProcessPoolExecutor
+
 try:
     from lightgbm import LGBMClassifier
 except OSError as e:
@@ -70,8 +73,13 @@ exchange_hours = {
 def get_trading_hours(exchange):
     return exchange_hours.get(exchange, exchange_hours['UNKNOWN'])
 
-def add_indicators(df, ticker):
-    exchange = ticker.fast_info['exchange']
+def add_indicators(df, ticker, code):
+    try:
+        exchange = ticker.fast_info['exchange']
+    except Exception as e:
+        print(f"[ERROR]: Data could not fetched for {code} (API Error). Recommendation system could not be created. Please add {code} again.")
+        return None
+
     daily_exchange_hours = get_trading_hours(exchange)
     annual_exchange_days = get_exchange_days(exchange)
 
@@ -83,10 +91,15 @@ def add_indicators(df, ticker):
     df['HV_21'] = df['Returns'].rolling(window=21).std() * ((annual_exchange_days * daily_exchange_hours) ** 0.5) * 100
     df['HV_63'] = df['Returns'].rolling(window=63).std() * ((annual_exchange_days * daily_exchange_hours) ** 0.5) * 100
     df['HV_252'] = df['Returns'].rolling(window=252).std() * ((annual_exchange_days * daily_exchange_hours) ** 0.5) * 100
-    df['MACD'] = df.ta.macd()
-    df['ATR'] = df.ta.atr(length=14)
-    df['Bollinger'] = df.ta.bbands()
-    df['OBV'] = df.ta.obv()
+    df.ta.macd(append = True, fast = 12, slow = 26, signal = 9)
+    df.ta.atr(length=14, append = True)
+    bbands = df.ta.bbands(length = 20)
+    df['BBL_20_2.0'] = bbands.filter(like = 'BBL').iloc[:,0]
+    df['BBM_20_2.0'] = bbands.filter(like = 'BBM').iloc[:,0]
+    df['BBU_20_2.0'] = bbands.filter(like = 'BBU').iloc[:,0]
+    df['BBP_20_2.0'] = bbands.filter(like = 'BBP').iloc[:,0]
+    df['BBB_20_2.0'] = bbands.filter(like = 'BBB').iloc[:,0]
+    df.ta.obv(append = True)
     return df
 
 def delete_model(username,code):
@@ -95,6 +108,7 @@ def delete_model(username,code):
         os.remove(file_name)
 
 def save_model(username, code, best_model, scaler):
+    os.makedirs("models", exist_ok = True)
     file_name = f"models/{username}_{code}_model.joblib"
     packet = {
         "model": best_model,
@@ -104,17 +118,22 @@ def save_model(username, code, best_model, scaler):
 
 def train_model(username,code):
     ticker = yf.Ticker(code)
-    df = ticker.history(period="2y", interval="1h")
-    time.sleep(0.5)
+    try:
+        df = ticker.history(period="2y", interval="1h")
+    except Exception:
+        print(f"[ERROR]: Data could not fetched for {code} (API Error). Recommendation system could not be created. Please add the {code} again.")
+        return
 
-    # dropping redundant columns
-    df.drop(columns=['Dividends', 'Stock Splits'], inplace=True, errors='ignore')
+    time.sleep(0.5)
 
     # filling the missing values (due to API) with their previous rows' values
     df.ffill(inplace=True)
 
     # Adding indicators to increase prediction accuracy
-    df = add_indicators(df, ticker)
+    df = add_indicators(df, ticker, code)
+
+    # dropping redundant columns
+    df.drop(columns=['Open','Low','High','Dividends', 'Stock Splits'], inplace=True, errors='ignore')
 
     # Target that the model will try to predict
     df['Target'] = (df['Close'].shift(-1) > df['Close']).astype(int)
@@ -128,18 +147,22 @@ def train_model(username,code):
     y = df['Target']
 
     # TRAIN/TEST SPLIT + SCALING
-    X_train, y_train = train_test_split(X,y, test_size=0.2, shuffle=False)
+    X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, shuffle=False)
     # to prevent data leakage, test data must be scaled according to
     # scaling parameters of train data
     scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
+    X_train_scaled = pd.DataFrame(
+        scaler.fit_transform(X_train),
+        columns = X_train.columns,
+        index = X_train.index
+    )
     # X_test_scaled = scaler.transform(X_test)
 
     # THE MODEL (LGBMClassifier)
     # to subsample parameter works, subsample_freq > 0
     # subsample = 0.8 and subsample_freq = 1 means that when a tree is created,
     # select the 80% of rows again randomly. This helps to prevent overfitting
-    model = LGBMClassifier(n_jobs=-1, random_state=42, subsample_freq = 1)
+    model = LGBMClassifier(n_jobs=-1, random_state=42, subsample_freq = 1, verbose = -1)
 
     # HYPERPARAMETER TUNING
     parameters = {
@@ -164,4 +187,38 @@ def train_model(username,code):
 
     # SAVING THE MODEL BY JOBLIB
     save_model(username, code, best_model, scaler)
+
+def run_training_pool(tasks):
+    with ProcessPoolExecutor(max_workers=3) as executor:
+        for username, asset in tasks:
+            executor.submit(train_model, username, asset)
+
+def are_models_exist_and_uptodate(data,username):
+    # thread is not started yet, therefore no need to use DATA_LOCK
+    all_files = set(f for f in os.listdir("models") if f.startswith(f"{username}_") and f.endswith("_model.joblib"))
+    now = time.time()
+    to_train = []
+    for asset_type in data["users"][username]:
+        if asset_type not in ["stocks", "forex", "commodities", "crypto"]:
+            continue
+        for asset in data["users"][username][asset_type]:
+            file_name = f"{username}_{asset}_model.joblib"
+            if file_name not in all_files:
+                to_train.append((username, asset))
+            else:
+                # to be cross-platform, os.path.join is used
+                last_modified_time = os.path.getmtime(os.path.join("models", file_name))
+                if now - last_modified_time >= 604800:
+                    # 1 week is enough to be outdated
+                    to_train.append((username, asset))
+
+    if not to_train:
+        return
+
+    train_pool = threading.Thread(
+        target = run_training_pool,
+        args = (to_train,),
+        daemon = True
+    )
+    train_pool.start()
 

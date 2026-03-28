@@ -16,7 +16,6 @@ general_env/
 .idea/
 
 # Files
-ornek.json
-config.json
 data.json
-deneme.py
+removed.py
+models/

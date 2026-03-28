@@ -82,7 +82,12 @@ def add_alarm(data, code, which_asset, username):
             value = input(f"Enter the fixed price in {currency_symbol} ({currency}) that will trigger the alarm (-1 to go back): ")
             value = float(utils.correct_choice_format(value))
         ticker = yf.Ticker(code)
-        latest_price = ticker.fast_info['lastPrice']
+        try:
+            latest_price = ticker.fast_info['lastPrice']
+        except Exception:
+            print(f"[ERROR]: Data could not fetched for {code} (API Error). Alarm could not be added. Please try again.")
+            return
+
         if latest_price > value:
             # when latest_price <= value
             # alarm will be triggered
@@ -152,7 +157,12 @@ def add_alarm(data, code, which_asset, username):
             value = float(utils.correct_choice_format(value))
         status = alarm_status_decider(asset)
         ticker = yf.Ticker(code)
-        base_price = ticker.fast_info["lastPrice"]
+        try:
+            base_price = ticker.fast_info["lastPrice"]
+        except Exception:
+            print(f"[ERROR]: Data could not fetched for {code} (API Error). Alarm could not be added. Please try again.")
+            return
+
         with DATA_LOCK:
             data["users"][username][which_asset][code]["strategies"][key] = {
                 "type": alarm_type,
@@ -241,7 +251,13 @@ def edit_alarm(data, code, which_asset, username):
                 old_value = alarm_properties["value"]
                 alarm_properties["value"] = value
             ticker = yf.Ticker(code)
-            last_price = ticker.fast_info['lastPrice']
+            try:
+                last_price = ticker.fast_info['lastPrice']
+            except Exception:
+                print(
+                    f"[ERROR]: Data could not fetched for {code} (API Error). Alarm could not be edited. Please try again.")
+                return
+
             with DATA_LOCK:
                 if last_price > value:
                     alarm_properties["condition"] = "lower_than"
@@ -384,7 +400,12 @@ def edit_quantity(data, code, which_asset, username):
         return
 
     ticker = yf.Ticker(code)
-    info = ticker.fast_info
+    try:
+        info = ticker.fast_info
+    except Exception:
+        print(f"[ERROR]: Data could not fetched for {code} (API Error). Quantity of the alarm could not be added. Please try again.")
+        return
+
     if choice == 1:
         add_quantity = input(f"Enter how many {code} you purchased (-1 to go back): ")
         add_quantity = float(utils.correct_choice_format(add_quantity))

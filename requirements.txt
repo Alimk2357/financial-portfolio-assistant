@@ -5,7 +5,7 @@ pandas-ta
 scikit-learn
 matplotlib
 mplfinance
-plyer
+notify-py
 bcrypt
 xlsxwriter
 joblib

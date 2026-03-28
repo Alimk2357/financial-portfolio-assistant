@@ -1,4 +1,4 @@
-import threading
+import multiprocessing as mp
 import yfinance as yf
 import src.utils as utils
 import src.storage as storage
@@ -11,7 +11,7 @@ logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 def add_financial_asset(data, which_asset, username):
     ticker = None
     while True:
-        code = input(f"\nEnter the Ticker (symbol) of the financial asset you want to add to {which_asset} list (-1 to go back): ").upper()
+        code = input(f"\nEnter the Ticker (symbol) of the financial asset you want to add to {which_asset} list (-1 to go back): ").upper().strip()
         if code == "-1":
             return
 
@@ -21,9 +21,13 @@ def add_financial_asset(data, which_asset, username):
                 continue
 
         ticker = yf.Ticker(code)
-        if ticker.history(period="1d", interval="1d").empty:
-            print(f"{code} does not belong to a valid financial asset.")
-            continue
+        try:
+            if ticker.history(period="1d", interval="1d").empty:
+                print(f"{code} does not belong to a valid financial asset.")
+                continue
+        except Exception as e:
+            print(f"[ERROR]: Data could not fetched for {code} (API Error). {code} could not be added. Please try again.")
+            return
         break
 
     quantity = input(f"Enter the quantity of the {code} (-1 to go back): ")
@@ -61,11 +65,9 @@ def add_financial_asset(data, which_asset, username):
         }
     storage.save_temp(data)
     print(f"{quantity} {code} is added successfully to portfolio of {username}.")
-    model_trainer = threading.Thread(
+    model_trainer = mp.Process(
         target = model.train_model,
-        args = (code,),
-        name = "Model Trainer",
-        daemon = False
+        args = (username, code)
     )
     model_trainer.start()
 

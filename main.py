@@ -1,4 +1,3 @@
-import sys
 import src.alarms as alarms
 import src.portfolio as portfolio
 import src.analysis as analysis
@@ -6,11 +5,11 @@ import src.storage as storage
 import src.auth as auth
 import src.ui as ui
 import src.utils as utils
-import time
+import src.model as model
 import src.tracking as tracking
+import time
 import threading
-
-
+import sys
 
 def main():
     try:
@@ -25,17 +24,26 @@ def main():
         ui.print_title()
         ui.entrance(data)
 
-        num = input("\nEnter your choice: ")
-        num = int(utils.correct_choice_format(num))
-        while data.get("users") and (num > 4 or num < 1):
+        if data.get("users"):
+            num = input("\nEnter your choice (1-4): ")
+        else:
+            num = input("Enter your choice (1-2): ")
+        num = utils.correct_choice_format(num)
+        if not num == "":
+            num = int(num)
+        while data.get("users") and (num == "" or (num > 4 or num < 1)):
             print("Invalid choice, please try again.")
-            num = input("Enter your choice (1-5): ")
-            num = int(utils.correct_choice_format(num))
+            num = input("Enter your choice (1-4): ")
+            num = utils.correct_choice_format(num)
+            if not num == "":
+                num = int(num)
 
-        while not data.get("users") and (num > 2 or num < 1):
+        while not data.get("users") and (num == "" or (num > 2 or num < 1)):
             print("Invalid choice, please try again.")
-            num = input("Enter your choice (1-3): ")
-            num = int(utils.correct_choice_format(num))
+            num = input("Enter your choice (1-2): ")
+            num = utils.correct_choice_format(num)
+            if not num == "":
+                num = int(num)
 
         logged_user = ""
         if data.get("users"):
@@ -55,6 +63,7 @@ def main():
 
         if logged_user != "":
             print("\nLogin Successful!\n")
+            model.are_models_exist_and_uptodate(data,logged_user)
             alarm_tracker = threading.Thread(
                 target = tracking.alarm_tracking,
                 args = (data, logged_user),
@@ -67,14 +76,20 @@ def main():
             utils.clear_screen()
             ui.main_menu(logged_user, data)
             choice = input("Enter your choice (1-7): ")
-            choice = int(utils.correct_choice_format(choice))
-            while choice > 7 or choice < 1:
+            choice = utils.correct_choice_format(choice)
+            if not choice == "":
+                choice = int(choice)
+            while choice == "" or choice > 7 or choice < 0:
                 print("Invalid choice, please try again.")
                 choice = input("Enter your choice (1-7): ")
-                choice = int(utils.correct_choice_format(choice))
+                choice = utils.correct_choice_format(choice)
+                if not choice == "":
+                    choice = int(choice)
 
             which_asset = ""
-            if choice == 1:
+            if choice == 0:
+                continue
+            elif choice == 1:
                 which_asset = "stocks"
             elif choice == 2:
                 which_asset = "crypto"
@@ -87,13 +102,17 @@ def main():
                     utils.clear_screen()
                     ui.setting_menu()
                     choice_settings = input("\nEnter your choice (1-3) (-1 to go back): ")
-                    choice_settings = int(utils.correct_choice_format(choice_settings))
-                    while choice_settings < 1 or choice_settings > 3:
+                    choice_settings = utils.correct_choice_format(choice_settings)
+                    if not choice_settings == "":
+                        choice_settings = int(choice_settings)
+                    while choice_settings == "" or choice_settings < 1 or choice_settings > 3:
                         if choice_settings == -1:
                             break
                         print("\nInvalid choice, please try again.")
                         choice_settings = input("Enter your choice (1-3) (-1 to go back): ")
-                        choice_settings = int(utils.correct_choice_format(choice_settings))
+                        choice_settings = utils.correct_choice_format(choice_settings)
+                        if not choice == "":
+                            choice = int(choice)
 
                     if choice_settings == -1:
                         break
@@ -101,13 +120,17 @@ def main():
                         utils.clear_screen()
                         ui.account_settings_menu()
                         choice_account_settings = input("\nEnter your choice (1-2) (-1 to go back): ")
-                        choice_account_settings = int(utils.correct_choice_format(choice_account_settings))
-                        while choice_account_settings < 1 or choice_account_settings > 2:
+                        choice_account_settings = utils.correct_choice_format(choice_account_settings)
+                        if not choice_account_settings == "":
+                            choice_account_settings = int(choice_account_settings)
+                        while choice_account_settings == "" or choice_account_settings < 1 or choice_account_settings > 2:
                             if choice_account_settings == -1:
                                 break
                             print("\nInvalid choice, please try again.")
                             choice_account_settings = input("Enter your choice (1-2) (-1 to go back): ")
-                            choice_account_settings = int(utils.correct_choice_format(choice_account_settings))
+                            choice_account_settings = utils.correct_choice_format(choice_account_settings)
+                            if not choice_account_settings == "":
+                                choice_account_settings = int(choice_account_settings)
 
                         if choice_account_settings == 1:
                             is_username_changed = auth.change_username(data, logged_user)
@@ -120,13 +143,17 @@ def main():
                         utils.clear_screen()
                         ui.notification_settings_menu(data, logged_user)
                         choice_notification_settings = input("\nEnter your choice (1-4) (-1 to go back): ")
-                        choice_notification_settings = int(utils.correct_choice_format(choice_notification_settings))
-                        while choice_notification_settings < 1 or choice_notification_settings > 4:
+                        choice_notification_settings = utils.correct_choice_format(choice_notification_settings)
+                        if not choice_notification_settings == "":
+                            choice_notification_settings = int(choice_notification_settings)
+                        while choice_notification_settings == "" or choice_notification_settings < 1 or choice_notification_settings > 4:
                             if choice_notification_settings == -1:
                                 break
                             print("\nInvalid choice, please try again.")
                             choice_notification_settings = input("\nEnter your choice (1-4) (-1 to go back): ")
-                            choice_notification_settings = int(utils.correct_choice_format(choice_notification_settings))
+                            choice_notification_settings = utils.correct_choice_format(choice_notification_settings)
+                            if not choice_notification_settings == "":
+                                choice_notification_settings = int(choice_notification_settings)
                         if choice_notification_settings == 1:
                             with tracking.DATA_LOCK:
                                 if data["users"][logged_user]["notifications"]["desktop_notifications"]:
@@ -158,30 +185,6 @@ def main():
                             print(f"App's name changed from '{old_name}' to '{new_name}'.")
                             time.sleep(2)
                         elif choice_notification_settings == 3:
-                            with tracking.DATA_LOCK:
-                                old_duration = data["users"][logged_user]["notifications"]["timeout"]
-                            print(f"\nCurrent notification duration is {old_duration}s.")
-                            new_duration = input("Enter the new duration of the notifications in seconds (-1 to go back): ")
-                            new_duration = float(utils.correct_choice_format(new_duration))
-                            while new_duration < 0:
-                                if new_duration == -1:
-                                    break
-                                print("\nDuration cannot be negative, please try again.")
-                                new_duration = input("Enter the new duration of the notifications in seconds (-1 to go back): ")
-                                new_duration = float(utils.correct_choice_format(new_duration))
-                            if new_duration == -1:
-                                continue
-                            with tracking.DATA_LOCK:
-                                data["users"][logged_user]["notifications"]["timeout"] = new_duration
-                            storage.save_temp(data)
-                            if new_duration > old_duration:
-                                print(f"Notification duration is increased from {old_duration}s to {new_duration}s.")
-                            elif new_duration < old_duration:
-                                print(f"Notification duration is decreased from {old_duration}s to {new_duration}s.")
-                            else:
-                                print("Notification duration is not changed.")
-                            time.sleep(2)
-                        elif choice_notification_settings == 4:
                             with tracking.DATA_LOCK:
                                 if data["users"][logged_user]["notifications"]["financial_recommendations"]:
                                     data["users"][logged_user]["notifications"]["financial_recommendations"] = False
@@ -265,11 +268,11 @@ def main():
                 utils.clear_screen()
                 financial_assets = ui.transaction_management_menu(data, logged_user, which_asset)
                 with tracking.DATA_LOCK:
-                    if financial_assets:
-                        operation = input("\nEnter your operation (A or B or D or R) : ").upper()
-                    else:
-                        operation = input("\nEnter your operation (A or B) : ").upper()
                     length = len(financial_assets)
+                if length > 0:
+                    operation = input("\nEnter your operation (A or B or D or R) : ").upper()
+                else:
+                    operation = input("\nEnter your operation (A or B) : ").upper()
                 operation = operation.replace(" ", "")
                 while length != 0 and operation not in ["A", "[A]", "B", "[B]", "D", "[D]", "R", "[R]"]:
                     print("\nInvalid choice, please try again.")
@@ -311,11 +314,15 @@ def main():
                             financial_asset = financial_assets[code]
                         ui.detail_menu(financial_asset, code)
                         choice_detail = input("\nEnter your choice (1-9): ")
-                        choice_detail = int(utils.correct_choice_format(choice_detail))
-                        while choice_detail > 9 or choice_detail < 1:
+                        choice_detail = utils.correct_choice_format(choice_detail)
+                        if not choice_detail == "":
+                            choice_detail = int(choice_detail)
+                        while choice_detail == "" or choice_detail > 9 or choice_detail < 1:
                             print("\nInvalid choice, please try again.")
                             choice_detail = input("Enter your choice (1-9): ")
-                            choice_detail = int(utils.correct_choice_format(choice_detail))
+                            choice_detail = utils.correct_choice_format(choice_detail)
+                            if not choice_detail == "":
+                                choice_detail = int(choice_detail)
 
                         if choice_detail == 1:
                             analysis.analysis_report(data, which_asset, logged_user, code)
