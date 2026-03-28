@@ -542,7 +542,8 @@ def analysis_report(data, which_asset, username, code):
         df_1y.index = df_1y.index.date
         df_1y.to_excel(writer, sheet_name='Raw Data', index=True)
         worksheet_raw = writer.sheets['Raw Data']
-        worksheet_raw.set_column(0, 24, 40)
+        worksheet_raw.set_column(0, 0, 9)
+        worksheet_raw.set_column(1, 24, 40)
         # Sheet 'Raw Data'
     print(f"{file_name} is successfully saved to Desktop.")
     time.sleep(2)
