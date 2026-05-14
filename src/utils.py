@@ -32,7 +32,7 @@ def correct_choice_format(choice):
         for i in range(0,len(choice)):
             if choice[i].isdigit() or (choice[i] == '.' and choice[i-1].isdigit() and choice[i+1].isdigit()) or choice[i] == "-":
                 s += choice[i]
-        return s
+        return "-27" if s == "" else s
 
 
 def find_empty_key(strategies):

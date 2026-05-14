@@ -28,22 +28,18 @@ def main():
             num = input("\nEnter your choice (1-4): ")
         else:
             num = input("Enter your choice (1-2): ")
-        num = utils.correct_choice_format(num)
+        num = int(utils.correct_choice_format(num))
         if not num == "":
             num = int(num)
-        while data.get("users") and (num == "" or (num > 4 or num < 1)):
+        while data.get("users") and (num > 4 or num < 1):
             print("Invalid choice, please try again.")
             num = input("Enter your choice (1-4): ")
-            num = utils.correct_choice_format(num)
-            if not num == "":
-                num = int(num)
+            num = int(utils.correct_choice_format(num))
 
-        while not data.get("users") and (num == "" or (num > 2 or num < 1)):
+        while not data.get("users") and (num > 2 or num < 1):
             print("Invalid choice, please try again.")
             num = input("Enter your choice (1-2): ")
-            num = utils.correct_choice_format(num)
-            if not num == "":
-                num = int(num)
+            num = int(utils.correct_choice_format(num))
 
         logged_user = ""
         if data.get("users"):
@@ -76,15 +72,11 @@ def main():
             utils.clear_screen()
             ui.main_menu(logged_user, data)
             choice = input("Enter your choice (1-7): ")
-            choice = utils.correct_choice_format(choice)
-            if not choice == "":
-                choice = int(choice)
-            while choice == "" or choice > 7 or choice < 0:
+            choice = int(utils.correct_choice_format(choice))
+            while choice > 7 or choice < 0:
                 print("Invalid choice, please try again.")
                 choice = input("Enter your choice (1-7): ")
-                choice = utils.correct_choice_format(choice)
-                if not choice == "":
-                    choice = int(choice)
+                choice = int(utils.correct_choice_format(choice))
 
             which_asset = ""
             if choice == 0:
@@ -102,17 +94,13 @@ def main():
                     utils.clear_screen()
                     ui.setting_menu()
                     choice_settings = input("\nEnter your choice (1-3) (-1 to go back): ")
-                    choice_settings = utils.correct_choice_format(choice_settings)
-                    if not choice_settings == "":
-                        choice_settings = int(choice_settings)
-                    while choice_settings == "" or choice_settings < 1 or choice_settings > 3:
+                    choice_settings = int(utils.correct_choice_format(choice_settings))
+                    while choice_settings < 1 or choice_settings > 3:
                         if choice_settings == -1:
                             break
                         print("\nInvalid choice, please try again.")
                         choice_settings = input("Enter your choice (1-3) (-1 to go back): ")
-                        choice_settings = utils.correct_choice_format(choice_settings)
-                        if not choice == "":
-                            choice = int(choice)
+                        choice_settings = int(utils.correct_choice_format(choice_settings))
 
                     if choice_settings == -1:
                         break
@@ -120,17 +108,13 @@ def main():
                         utils.clear_screen()
                         ui.account_settings_menu()
                         choice_account_settings = input("\nEnter your choice (1-2) (-1 to go back): ")
-                        choice_account_settings = utils.correct_choice_format(choice_account_settings)
-                        if not choice_account_settings == "":
-                            choice_account_settings = int(choice_account_settings)
-                        while choice_account_settings == "" or choice_account_settings < 1 or choice_account_settings > 2:
+                        choice_account_settings = int(utils.correct_choice_format(choice_account_settings))
+                        while choice_account_settings < 1 or choice_account_settings > 2:
                             if choice_account_settings == -1:
                                 break
                             print("\nInvalid choice, please try again.")
                             choice_account_settings = input("Enter your choice (1-2) (-1 to go back): ")
-                            choice_account_settings = utils.correct_choice_format(choice_account_settings)
-                            if not choice_account_settings == "":
-                                choice_account_settings = int(choice_account_settings)
+                            choice_account_settings = int(utils.correct_choice_format(choice_account_settings))
 
                         if choice_account_settings == 1:
                             is_username_changed = auth.change_username(data, logged_user)
@@ -143,17 +127,13 @@ def main():
                         utils.clear_screen()
                         ui.notification_settings_menu(data, logged_user)
                         choice_notification_settings = input("\nEnter your choice (1-4) (-1 to go back): ")
-                        choice_notification_settings = utils.correct_choice_format(choice_notification_settings)
-                        if not choice_notification_settings == "":
-                            choice_notification_settings = int(choice_notification_settings)
-                        while choice_notification_settings == "" or choice_notification_settings < 1 or choice_notification_settings > 4:
+                        choice_notification_settings = int(utils.correct_choice_format(choice_notification_settings))
+                        while choice_notification_settings < 1 or choice_notification_settings > 4:
                             if choice_notification_settings == -1:
                                 break
                             print("\nInvalid choice, please try again.")
                             choice_notification_settings = input("\nEnter your choice (1-4) (-1 to go back): ")
-                            choice_notification_settings = utils.correct_choice_format(choice_notification_settings)
-                            if not choice_notification_settings == "":
-                                choice_notification_settings = int(choice_notification_settings)
+                            choice_notification_settings = int(utils.correct_choice_format(choice_notification_settings))
                         if choice_notification_settings == 1:
                             with tracking.DATA_LOCK:
                                 if data["users"][logged_user]["notifications"]["desktop_notifications"]:
@@ -314,15 +294,11 @@ def main():
                             financial_asset = financial_assets[code]
                         ui.detail_menu(financial_asset, code)
                         choice_detail = input("\nEnter your choice (1-9): ")
-                        choice_detail = utils.correct_choice_format(choice_detail)
-                        if not choice_detail == "":
-                            choice_detail = int(choice_detail)
-                        while choice_detail == "" or choice_detail > 9 or choice_detail < 1:
+                        choice_detail = int(utils.correct_choice_format(choice_detail))
+                        while choice_detail > 9 or choice_detail < 1:
                             print("\nInvalid choice, please try again.")
                             choice_detail = input("Enter your choice (1-9): ")
-                            choice_detail = utils.correct_choice_format(choice_detail)
-                            if not choice_detail == "":
-                                choice_detail = int(choice_detail)
+                            choice_detail = int(utils.correct_choice_format(choice_detail))
 
                         if choice_detail == 1:
                             analysis.analysis_report(data, which_asset, logged_user, code)
